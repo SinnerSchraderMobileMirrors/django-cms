@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from django.test import TestCase
 
 from cms.api import create_page
-from cms.signals import urls_need_reloading
+from cms.signals import cms_urls_need_reloading
 
 
 class SignalTester(object):
@@ -29,7 +29,7 @@ def signal_tester(signal):
 
 class SignalTests(TestCase):
     def test_urls_need_reloading_signal_create(self):
-        with signal_tester(urls_need_reloading) as env:
+        with signal_tester(cms_urls_need_reloading) as env:
             self.client.get('/')
             self.assertEqual(env.call_count, 0)
             create_page(
@@ -44,7 +44,7 @@ class SignalTests(TestCase):
             self.assertEqual(env.call_count, 1)
 
     def test_urls_need_reloading_signal_delete(self):
-        with signal_tester(urls_need_reloading) as env:
+        with signal_tester(cms_urls_need_reloading) as env:
             self.client.get('/')
             self.assertEqual(env.call_count, 0)
             page = create_page(
@@ -60,7 +60,7 @@ class SignalTests(TestCase):
             self.assertEqual(env.call_count, 1)
 
     def test_urls_need_reloading_signal_change_slug(self):
-        with signal_tester(urls_need_reloading) as env:
+        with signal_tester(cms_urls_need_reloading) as env:
             self.assertEqual(env.call_count, 0)
             page = create_page(
                 "apphooked-page",
