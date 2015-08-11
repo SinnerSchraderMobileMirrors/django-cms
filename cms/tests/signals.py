@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
-from __future__ import with_statement
+
+from __future__ import unicode_literals, with_statement
+
 from contextlib import contextmanager
 
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from cms.api import create_page
+from cms.models import UrlconfRevision
 from cms.signals import cms_urls_need_reloading
+from cms.test_utils.testcases import CMSTestCase
+
+APP_NAME = 'SampleApp'
 
 
 class SignalTester(object):
@@ -26,6 +35,7 @@ def signal_tester(signal):
         yield env
     finally:
         signal.disconnect(env, weak=True)
+
 
 class SignalTests(TestCase):
     def test_urls_need_reloading_signal_create(self):
@@ -78,3 +88,44 @@ class SignalTests(TestCase):
             page.publish('en')
             self.client.get('/')
             self.assertEqual(env.call_count, 2)
+
+
+class ApphooksReloadTests(CMSTestCase):
+    def test_urls_reloaded(self):
+        """
+        Tests that URLs are automatically reloaded when the ApphookReload
+        middleware is installed.
+        """
+        with signal_tester(cms_urls_need_reloading) as env:
+            #
+            # Sets up an apphook'ed page, but does not yet publish it. The
+            # cms_urls_need_reloading signal should not yet fire.
+            #
+            superuser = get_user_model().objects.create_superuser(
+                'admin', 'admin@admin.com', 'admin')
+            page = create_page("home", "nav_playground.html", "en",
+                               created_by=superuser)
+            page.publish('en')
+            app_page = create_page("app_page", "nav_playground.html", "en",
+                                   created_by=superuser, parent=page,
+                                   published=False, apphook="SampleApp")
+            self.client.get('/')  # Required to invoke the middleware
+            self.assertEqual(env.call_count, 0)
+
+            #
+            # Gets the current urls revision for testing against later.
+            #
+            current_revision, _ = UrlconfRevision.get_or_create_revision()
+
+            #
+            # Publishes the apphook. This is one of many ways to trigger the
+            # firing of the signal. The tests above test some of the other ways
+            # already.
+            #
+            app_page.publish('en')
+            self.client.get('/')  # Required to invoke the middleware
+            self.assertEqual(env.call_count, 1)
+
+            # And, this should result in a the updating of the UrlconfRevision
+            new_revision, _ = UrlconfRevision.get_or_create_revision()
+            self.assertNotEquals(current_revision, new_revision)
