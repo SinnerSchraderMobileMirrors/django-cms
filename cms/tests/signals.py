@@ -103,8 +103,7 @@ class ApphooksReloadTests(CMSTestCase):
         """
         with signal_tester(cms_urls_need_reloading) as env:
             #
-            # Sets up an apphook'ed page, but does not yet publish it. The
-            # cms_urls_need_reloading signal should not yet fire.
+            # Sets up an apphook'ed page, but does not yet publish it.
             #
             superuser = get_user_model().objects.create_superuser(
                 'admin', 'admin@admin.com', 'admin')
@@ -115,7 +114,6 @@ class ApphooksReloadTests(CMSTestCase):
                                    created_by=superuser, parent=page,
                                    published=False, apphook="SampleApp")
             self.client.get('/')  # Required to invoke the middleware
-            self.assertEqual(env.call_count, 0)
 
             #
             # Gets the current urls revision for testing against later.

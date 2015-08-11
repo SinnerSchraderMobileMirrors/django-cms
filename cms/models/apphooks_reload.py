@@ -30,30 +30,21 @@ class UrlconfRevision(models.Model):
             CACHE_DURATION
         )
 
-    def store_in_cache(self):
-        """ This singleton is front-ended by a cache. """
-        if not get_cms_setting('PAGE_CACHE'):
-            return
-
-        self._set_cache(self.revision)
-
     def save(self, *args, **kwargs):
         """
         Simply forces this model to be a singleton and to update the cache,
         if configured.
         """
         self.pk = 1
-        self.store_in_cache()
+        self._set_cache(self.revision)
         super(UrlconfRevision, self).save(*args, **kwargs)
 
     @classmethod
     def get_or_create_revision(cls, revision=None):
         """
-        Getter for the cached version of the object, if available, else, get
-        from database backend (and store in the cache for next time).
-
-        :param revision:
-        :return: (the current revision, boolean of it was just created now)
+        Convenience method for getting or creating revision in a cache-friendly
+        way, if available, else, get from database backend (and store in the
+        cache for next time).
         """
         if get_cms_setting('PAGE_CACHE'):
             revision = cache.get(CMS_URL_CONF_VERSION_KEY, None)
@@ -64,12 +55,16 @@ class UrlconfRevision(models.Model):
             revision = str(uuid.uuid4())
         obj, created = cls.objects.get_or_create(
             pk=1, defaults=dict(revision=revision))
-        obj.store_in_cache()
+        cls._set_cache(obj.revision)
         return obj.revision, created
 
     @classmethod
     def update_revision(cls, revision):
+        """ Convenience method for updating the revision. """
         if revision is None:
             revision = str(uuid.uuid4())
-        cls.objects.update(revision=revision)
-        cls._set_cache(revision)
+        obj, created = cls.objects.get_or_create(
+            pk=1, defaults=dict(revision=revision))
+        if not created:
+            obj.revision = revision
+            obj.save()
