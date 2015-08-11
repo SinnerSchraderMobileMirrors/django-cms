@@ -113,7 +113,6 @@ class ApphooksReloadTests(CMSTestCase):
                                created_by=superuser, parent=page,
                                published=False, apphook="SampleApp")
         self.client.get('/')  # Required to invoke the middleware
-
         #
         # Gets the current urls revision for testing against later.
         #
