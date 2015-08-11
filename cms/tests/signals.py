@@ -90,6 +90,11 @@ class SignalTests(TestCase):
             self.assertEqual(env.call_count, 2)
 
 
+@override_settings(
+    MIDDLEWARE_CLASSES=[
+        'cms.middleware.utils.ApphookReloadMiddleware'
+    ] + settings.MIDDLEWARE_CLASSES,
+)
 class ApphooksReloadTests(CMSTestCase):
     def test_urls_reloaded(self):
         """
