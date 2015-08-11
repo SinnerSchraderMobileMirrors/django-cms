@@ -6,8 +6,6 @@ import uuid
 
 from django.db import models
 
-from cms.utils import get_cms_setting
-
 
 class UrlconfRevision(models.Model):
     revision = models.CharField(max_length=255)
