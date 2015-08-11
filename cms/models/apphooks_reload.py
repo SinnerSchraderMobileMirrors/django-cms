@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import uuid
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db import models
 
@@ -11,6 +12,9 @@ from cms.utils import get_cms_setting
 
 CMS_URL_CONF_VERSION_KEY = get_cms_setting("CACHE_PREFIX") + 'URL_CONF_VERSION'
 CACHE_DURATION = get_cms_setting('CACHE_DURATIONS')['content']
+
+# FIXME: TESTING ONLY. REMOVE BEFORE MERGING INTO CODE-BASE.
+CACHE_SWITCH = getattr(settings, 'CMS_APPHOOK_RELOAD_CACHE_SWITCH', True)
 
 
 class UrlconfRevision(models.Model):
@@ -21,7 +25,7 @@ class UrlconfRevision(models.Model):
 
     @staticmethod
     def _set_cache(revision):
-        if not get_cms_setting('PAGE_CACHE'):
+        if not (CACHE_SWITCH and get_cms_setting('PAGE_CACHE')):
             return
 
         cache.set(
@@ -46,7 +50,7 @@ class UrlconfRevision(models.Model):
         way, if available, else, get from database backend (and store in the
         cache for next time).
         """
-        if get_cms_setting('PAGE_CACHE'):
+        if CACHE_SWITCH and get_cms_setting('PAGE_CACHE'):
             revision = cache.get(CMS_URL_CONF_VERSION_KEY, None)
             if revision is not None:
                 return revision, False
