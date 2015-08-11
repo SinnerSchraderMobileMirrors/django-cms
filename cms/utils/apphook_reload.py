@@ -30,8 +30,7 @@ def ensure_urlconf_is_up_to_date():
                   "      {0} ({1})\n"
                   "   -> {2} ({3})".format(
                       global_revision, type(global_revision),
-                      local_revision, type(local_revision),
-            ))
+                      local_revision, type(local_revision),))
         debug_check_url('my_test_app_view')
         reload_urlconf(new_revision=global_revision)
         debug_check_url('my_test_app_view')
@@ -62,26 +61,16 @@ def set_local_revision(revision):
 
 def get_global_revision():
     from ..models import UrlconfRevision
-    revision, created = UrlconfRevision.objects.get_or_create(
-        id=1,
-        defaults=dict(
-            revision=str(uuid.uuid4()),
-        )
-    )
-    return revision.revision
+    revision, _ = UrlconfRevision.get_or_create_revision(
+        revision=str(uuid.uuid4()))
+    return revision
 
 
 def set_global_revision(new_revision=None):
     from ..models import UrlconfRevision
-    x = UrlconfRevision.objects.update(id=1, revision=new_revision)
-    if x < 1:
-        # the revision entry in the db does not exist yet
-        UrlconfRevision.objects.get_or_create(
-            id=1,
-            defaults=dict(
-                revision=new_revision,
-            )
-        )
+    if new_revision is None:
+        new_revision = str(uuid.uuid4())
+    UrlconfRevision.update_revision(new_revision)
 
 
 def mark_urlconf_as_changed():
