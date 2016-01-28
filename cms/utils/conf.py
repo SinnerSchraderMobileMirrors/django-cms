@@ -67,7 +67,7 @@ DEFAULTS = {
 
 def get_cache_durations():
     """
-    Returns the setting: CMS_CACHE_DURATIONS the defaults.
+    Returns the setting: CMS_CACHE_DURATIONS or the defaults.
     """
     return getattr(settings, 'CMS_CACHE_DURATIONS', {
         'menus': 60 * 60,
